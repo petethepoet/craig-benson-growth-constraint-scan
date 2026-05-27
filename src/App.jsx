@@ -361,6 +361,14 @@ const proof = [
   { value: "$170M", label: "Global organization unified" },
 ];
 
+const operatorSignals = [
+  "Industrial P&L leadership",
+  "Owner / president operator",
+  "Commercial transformation",
+  "Acquisition integration",
+  "Navy nuclear discipline",
+];
+
 const experience = [
   {
     eyebrow: "Global industrial P&L",
@@ -527,6 +535,34 @@ function buildAutomatedSummary(score, band, weakAreas) {
   return `Based on the answers provided, the business appears to be in the ${band.name} band with likely pressure around ${constraints}. A practical next step is to validate the evidence behind those areas before committing to a major hire, acquisition, recapitalization, or operating reset. This is an automated summary and has not been reviewed or vetted by Craig Benson.`;
 }
 
+function getConstraintPattern(weakAreas) {
+  const labels = weakAreas.map((area) => area.label);
+  if (labels.some((label) => label.includes("Leadership"))) {
+    return "The constraint pattern points to leadership dependency and uneven operating ownership.";
+  }
+  if (labels.some((label) => label.includes("Pipeline") || label.includes("Commercial"))) {
+    return "The constraint pattern points to commercial visibility, sales cadence, and forecast confidence.";
+  }
+  if (labels.some((label) => label.includes("Margin") || label.includes("Quote-to-Cash"))) {
+    return "The constraint pattern points to margin leakage, pricing discipline, and handoff execution.";
+  }
+  if (labels.some((label) => label.includes("Operating") || label.includes("Integration"))) {
+    return "The constraint pattern points to execution reliability, integration capacity, and management bandwidth.";
+  }
+  return "The constraint pattern points to an operating model that needs sharper evidence, ownership, and cadence.";
+}
+
+function getCommercialImplication(band, weakAreas) {
+  const topArea = weakAreas[0]?.label || "the operating model";
+  if (band.name === "Stabilize") {
+    return `${topArea} should be validated before making a major hire, add-on acquisition, recapitalization, or broad transformation commitment.`;
+  }
+  if (band.name === "Professionalize") {
+    return `${topArea} may be where partial systems are creating execution drag, margin noise, or unclear accountability.`;
+  }
+  return `${topArea} may be the next lever to strengthen before layering on more complexity or a second wave of growth.`;
+}
+
 function submitDiagnosticPayload(payload) {
   // Connect Supabase here if you want durable storage for contacts, answers, reports, and routing decisions.
   // Connect a GoHighLevel webhook here if this should create/update a CRM contact and opportunity.
@@ -551,6 +587,7 @@ export default function App() {
     trigger: "",
     timing: "",
     involvement: "",
+    decision: "",
     notes: "",
   });
 
@@ -704,21 +741,29 @@ function Header({ startScan }) {
 function Landing({ startScan }) {
   return (
     <main id="top">
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-16 md:grid-cols-[1fr_360px] md:items-center lg:grid-cols-[1fr_420px] lg:py-20">
+      <section className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_80%_20%,rgba(251,191,36,0.13),transparent_32%),linear-gradient(135deg,#020617_0%,#0f172a_55%,#111827_100%)]">
+        <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,.65)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.65)_1px,transparent_1px)] [background-size:44px_44px]" />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-16 md:grid-cols-[1fr_360px] md:items-center lg:grid-cols-[1fr_420px] lg:py-20">
           <div>
             <div className="mb-5 inline-flex rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-              Founder-owned and PE-backed manufacturers
+              Industrial growth operator
             </div>
             <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Craig Benson helps industrial companies turn growth pressure into operating discipline.
+              Industrial growth discipline for manufacturers at an inflection point.
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">
-              When a manufacturer is facing succession, value creation, underperformance, acquisition integration, leadership search, or a commercial reset, the constraint is rarely one spreadsheet or one hire. Craig brings operator judgment to the places where sales, margin, execution, data, and leadership accountability meet.
+              Craig Benson helps founder-owned and PE-backed manufacturers turn growth pressure into operating discipline when succession, value creation, underperformance, acquisition integration, leadership search, or a commercial reset puts the business under strain.
             </p>
+            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              {["Where sales meets operations", "Where margin meets execution", "Where mandate meets accountability"].map((item) => (
+                <div key={item} className="border-l border-amber-300/40 pl-4 text-sm font-semibold text-slate-200">
+                  {item}
+                </div>
+              ))}
+            </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button onClick={startScan} className="gap-2">
-                Start the diagnostic <ArrowRight className="h-4 w-4" />
+                Start the Growth Constraint Scan <ArrowRight className="h-4 w-4" />
               </Button>
               <a
                 href="#craig"
@@ -728,16 +773,17 @@ function Landing({ startScan }) {
               </a>
             </div>
           </div>
-          <Card className="overflow-hidden border border-white/10 bg-white text-slate-950 shadow-2xl">
+          <Card className="overflow-hidden border border-white/15 bg-white text-slate-950 shadow-2xl">
             <img
               src={headshotUrl}
               alt="Craig Benson"
-              className="h-72 w-full object-cover object-center sm:h-96 md:h-[34rem]"
+              className="h-72 w-full object-cover object-center sm:h-96 md:h-[30rem]"
             />
-            <div className="p-6">
-              <div className="text-2xl font-semibold">Craig Benson</div>
+            <div className="border-t border-slate-200 p-6">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Craig Benson</div>
+              <div className="mt-2 text-2xl font-semibold">Operator, not observer</div>
               <p className="mt-2 text-slate-700">
-                Industrial growth operator with P&L, owner-president, commercial transformation, and Navy nuclear leadership experience.
+                P&L leader, owner-president, commercial operator, acquisition integrator, and Navy nuclear officer.
               </p>
               <div className="mt-5 grid grid-cols-2 gap-3">
                 {proof.map((item) => (
@@ -749,6 +795,16 @@ function Landing({ startScan }) {
               </div>
             </div>
           </Card>
+        </div>
+        <div className="relative border-t border-white/10 bg-slate-950/55">
+          <div className="mx-auto grid max-w-7xl gap-3 px-4 py-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-5">
+            {operatorSignals.map((signal) => (
+              <div key={signal} className="flex items-center gap-2 text-sm font-semibold text-slate-300">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-300" />
+                {signal}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
       <About />
@@ -793,6 +849,18 @@ function About() {
           <p className="mt-6 text-lg leading-8 text-slate-700 sm:text-xl">
             Craig has led industrial businesses through the practical work that decides whether growth becomes enterprise value: leadership cadence, sales discipline, customer diversification, margin visibility, product commercialization, ERP/CRM adoption, and operating accountability.
           </p>
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {[
+              ["Operator judgment", "Built from P&L responsibility, acquisition work, customer concentration fixes, and commercial resets."],
+              ["Board-level translation", "Connects owner or sponsor mandate to the few operating moves that actually change enterprise value."],
+              ["Manufacturing reality", "Designed for businesses where sales, quoting, delivery, quality, cash, and leadership capacity are connected."],
+            ].map(([title, copy]) => (
+              <div key={title} className="border-l-2 border-amber-600 bg-slate-50 p-5">
+                <h3 className="font-semibold text-slate-950">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{copy}</p>
+              </div>
+            ))}
+          </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {proof.map((item) => (
               <div key={item.label} className="rounded-lg border border-slate-200 bg-slate-50 p-5">
@@ -899,7 +967,7 @@ function Diagnostic({ startScan }) {
                 Private diagnostic report
               </div>
               <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">
-                See what is probably holding the business back before the next big hire, acquisition, recap, or reset.
+                Use the scan when there is a real operating decision on the table.
               </h2>
               <p className="mt-5 text-lg leading-8 text-slate-300">
                 The scan gives owners, sponsors, boards, and search partners a structured first read on where the business is constrained, what evidence would confirm it, and whether the situation merits a fit conversation with Craig.
@@ -999,14 +1067,22 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit }) {
       <div className="grid gap-8 lg:grid-cols-[0.8fr_1fr]">
         <Card className="border border-white/10 bg-white/5 p-6 sm:p-8">
           <div className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">
-            Gated private report
+            Fit screen
           </div>
           <h1 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
-            Your diagnostic report is ready.
+            Confirm the operating context.
           </h1>
           <p className="mt-4 text-slate-300">
-            The scan is a qualified-opportunity filter, not free consulting. If the situation appears active and aligned, you will be routed toward a fit conversation. Otherwise you will receive an automated summary that has not been reviewed or vetted by Craig Benson.
+            Craig reviews situations where there is a real operating mandate, active timing, and a decision-maker or search partner involved. The report remains private; routing depends on the context you provide here.
           </p>
+          <div className="mt-6 space-y-3 border-t border-white/10 pt-6">
+            {["Active operating need", "Clear decision context", "Manufacturer or industrial platform", "Owner, sponsor, board, CEO, or search role"].map((item) => (
+              <div key={item} className="flex gap-3 text-sm text-slate-300">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                {item}
+              </div>
+            ))}
+          </div>
           <div className="mt-8 rounded-lg border border-white/10 bg-slate-900 p-6">
             <div className="text-sm text-slate-400">Current score</div>
             <div className="mt-2 text-5xl font-semibold text-amber-300">{score} / 24</div>
@@ -1016,7 +1092,10 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit }) {
           </div>
         </Card>
         <Card className="border border-white/10 bg-white p-6 text-slate-950 sm:p-8">
-          <h2 className="text-2xl font-semibold">Unlock the full report</h2>
+          <h2 className="text-2xl font-semibold">Generate the private report</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Required fields help determine whether this should be routed toward a fit conversation or returned as an automated summary.
+          </p>
           <form onSubmit={handleLeadSubmit} className="mt-6 grid gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Input required label="Name" value={lead.name} onChange={(value) => update("name", value)} />
@@ -1027,7 +1106,7 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit }) {
                 value={lead.email}
                 onChange={(value) => update("email", value)}
               />
-              <Input label="Company" value={lead.company} onChange={(value) => update("company", value)} />
+              <Input required label="Company" value={lead.company} onChange={(value) => update("company", value)} />
               <Input label="Title" value={lead.title} onChange={(value) => update("title", value)} />
               <Input label="Phone" value={lead.phone} onChange={(value) => update("phone", value)} />
               <Select
@@ -1066,6 +1145,15 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit }) {
               options={[...qualifiedRoles, "Advisor/consultant", "Other"]}
             />
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
+              What decision are you trying to make?
+              <textarea
+                value={lead.decision}
+                onChange={(event) => update("decision", event.target.value)}
+                placeholder="Example: decide whether to hire a president, reset sales leadership, prepare for a recap, or integrate an add-on."
+                className="min-h-24 rounded-lg border border-slate-300 px-4 py-3 font-normal outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Optional context
               <textarea
                 value={lead.notes}
@@ -1074,7 +1162,7 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit }) {
               />
             </label>
             <Button type="submit" variant="dark" className="mt-2">
-              Show my report
+              Generate my private report
             </Button>
           </form>
         </Card>
@@ -1132,6 +1220,9 @@ function Report({
   weakAreas,
 }) {
   const isQualified = routingStatus === "qualified";
+  const constraintPattern = getConstraintPattern(weakAreas);
+  const commercialImplication = getCommercialImplication(band, weakAreas);
+  const routingLabel = isQualified ? "Fit conversation route" : "Automated summary route";
 
   return (
     <main className="report-page mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
@@ -1144,7 +1235,7 @@ function Report({
             Industrial Growth Constraint Report
           </h1>
           <p className="mt-3 max-w-3xl text-slate-300 print:text-slate-700">
-            This report summarizes likely operating constraints based on the answers provided. It is meant to frame a sharper conversation, not replace diligence.
+            This private operating memo summarizes likely constraints based on the answers provided. It is meant to frame sharper diligence and conversation, not replace it.
           </p>
         </div>
         <div className="flex flex-col gap-3 print:hidden sm:flex-row">
@@ -1156,6 +1247,25 @@ function Report({
           </Button>
         </div>
       </div>
+
+      <section className="report-card mb-6 border border-amber-300/30 bg-amber-300/10 p-6 text-amber-50 print:border-slate-200 print:bg-slate-50 print:text-slate-950 sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200 print:text-amber-700">
+              Executive summary
+            </div>
+            <h2 className="mt-3 text-2xl font-semibold text-white print:text-slate-950 sm:text-3xl">
+              {constraintPattern}
+            </h2>
+            <p className="mt-4 leading-7 text-amber-100 print:text-slate-700">{commercialImplication}</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <SummaryMetric label="Readiness band" value={band.name} />
+            <SummaryMetric label="Routing" value={routingLabel} />
+            <SummaryMetric label="Top area" value={weakAreas[0]?.label || "Not enough data"} />
+          </div>
+        </div>
+      </section>
 
       <section className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
         <Card className="report-card border border-white/10 bg-white/5 p-6 print:border-slate-200 print:bg-white sm:p-8">
@@ -1171,7 +1281,7 @@ function Report({
           <div className="mt-8 rounded-lg border border-white/10 bg-slate-900 p-5 print:border-slate-200 print:bg-slate-50">
             <div className="text-sm font-semibold text-amber-300 print:text-amber-700">Submitted context</div>
             <div className="mt-3 space-y-2 text-sm text-slate-300 print:text-slate-700">
-              {["name", "company", "title", "revenue", "ownership", "trigger", "timing", "involvement"].map((key) => (
+              {["name", "company", "title", "revenue", "ownership", "trigger", "timing", "involvement", "decision"].map((key) => (
                 <div key={key}>
                   <span className="text-slate-500">{key}:</span> {lead[key] || "Not provided"}
                 </div>
@@ -1188,7 +1298,11 @@ function Report({
           <p className="mt-4 text-lg leading-8 text-slate-700">
             The score is not the answer. It is the starting point. The next step is to validate evidence, separate symptoms from root constraints, and decide what should happen in the first 100 days.
           </p>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            <ReportPanel title="Likely constraint pattern">
+              <div className="rounded-lg bg-white p-4 text-sm leading-6 text-slate-700">{constraintPattern}</div>
+              <div className="rounded-lg bg-white p-4 text-sm leading-6 text-slate-700">{commercialImplication}</div>
+            </ReportPanel>
             <ReportPanel title="Top constraint areas">
               {weakAreas.map((area, index) => (
                 <div key={area.id} className="rounded-lg border border-slate-200 bg-white p-4">
@@ -1299,6 +1413,14 @@ function Report({
                 <p className="mt-4 text-sm text-amber-100 print:text-slate-700">
                   This response is automated and has not been reviewed or vetted by Craig Benson.
                 </p>
+                <div className="mt-5 space-y-3 border-t border-amber-300/20 pt-5 text-sm text-amber-100 print:border-slate-200 print:text-slate-700">
+                  {["Gather the evidence gaps listed above.", "Confirm whether the issue has an active decision owner.", "Re-run the scan when timing, role, or trigger changes."].map((item) => (
+                    <div key={item} className="flex gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
               </>
             )}
             <div className="mt-4 text-sm text-amber-100 print:text-slate-700">
@@ -1321,6 +1443,17 @@ function ReportPanel({ title, children }) {
     <div className="rounded-lg bg-slate-50 p-5">
       <h3 className="font-semibold">{title}</h3>
       <div className="mt-4 space-y-3">{children}</div>
+    </div>
+  );
+}
+
+function SummaryMetric({ label, value }) {
+  return (
+    <div className="border border-amber-300/20 bg-slate-950/40 p-4 print:border-slate-200 print:bg-white">
+      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-200 print:text-amber-700">
+        {label}
+      </div>
+      <div className="mt-2 text-sm font-semibold leading-5 text-white print:text-slate-950">{value}</div>
     </div>
   );
 }
