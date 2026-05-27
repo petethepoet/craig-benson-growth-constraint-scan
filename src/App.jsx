@@ -705,7 +705,7 @@ function Landing({ startScan }) {
   return (
     <main id="top">
       <section className="relative overflow-hidden border-b border-white/10">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1fr_420px] lg:items-center lg:py-20">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-16 md:grid-cols-[1fr_360px] md:items-center lg:grid-cols-[1fr_420px] lg:py-20">
           <div>
             <div className="mb-5 inline-flex rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
               Founder-owned and PE-backed manufacturers
@@ -732,7 +732,7 @@ function Landing({ startScan }) {
             <img
               src={headshotUrl}
               alt="Craig Benson"
-              className="h-72 w-full object-cover object-center sm:h-96"
+              className="h-72 w-full object-cover object-center sm:h-96 md:h-[34rem]"
             />
             <div className="p-6">
               <div className="text-2xl font-semibold">Craig Benson</div>
