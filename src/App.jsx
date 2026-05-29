@@ -660,6 +660,15 @@ export default function App() {
       actionTitle: band.actionTitle,
       firstPriorities: band.actions,
       avoid: band.avoid,
+      reportRows: reportRows.map((row) => ({
+        id: row.id,
+        label: row.label,
+        prompt: row.prompt,
+        score: row.score,
+        operatorLens: row.operatorLens,
+        interpretation: row.interpretation,
+        nextMove: row.nextMove,
+      })),
       weakAreas: weakAreas.map((area) => ({
         id: area.id,
         label: area.label,
@@ -1183,8 +1192,8 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit, submitError
               <textarea
                 value={lead.decision}
                 onChange={(event) => update("decision", event.target.value)}
-                placeholder="Example: decide whether to hire a president, reset sales leadership, prepare for a recap, or integrate an add-on."
-                className="min-h-24 rounded-lg border border-slate-300 px-4 py-3 font-normal outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
+        placeholder="Example: decide whether to hire a president, reset sales leadership, prepare for a recap, or integrate an add-on."
+                className="min-h-24 rounded-lg border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 placeholder:text-slate-400 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
               />
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
@@ -1192,7 +1201,7 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit, submitError
               <textarea
                 value={lead.notes}
                 onChange={(event) => update("notes", event.target.value)}
-                className="min-h-28 rounded-lg border border-slate-300 px-4 py-3 font-normal outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
+                className="min-h-28 rounded-lg border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 placeholder:text-slate-400 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
               />
             </label>
             <Button type="submit" variant="dark" className="mt-2">
@@ -1219,7 +1228,7 @@ function Input({ label, value, onChange, type = "text", required = false }) {
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-lg border border-slate-300 px-4 py-3 font-normal outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
+        className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 placeholder:text-slate-400 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
       />
     </label>
   );
@@ -1233,7 +1242,7 @@ function Select({ label, value, onChange, options, required = false }) {
         required={required}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-normal outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
+        className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-normal text-slate-950 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-200"
       >
         <option value="">Select...</option>
         {options.map((option) => (
