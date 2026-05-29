@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy:cloudflare": "npm run build && npx wrangler pages deploy dist --project-name craig-benson-growth-constraint-scan --branch main",
     "preview": "vite preview"
   },
   "dependencies": {
