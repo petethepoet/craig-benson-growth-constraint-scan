@@ -1,4 +1,4 @@
-const DEFAULT_TO = "CraigBenson0848@gmail.com";
+const DEFAULT_TO = ["CraigBenson0848@gmail.com", "thewriters@gmail.com"];
 const DEFAULT_FROM = "Craig Benson Scan <scan@craigbenson.us>";
 
 export async function onRequestOptions() {
@@ -26,7 +26,7 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    const to = env.EMAIL_TO?.trim() || DEFAULT_TO;
+    const to = parseRecipients(env.EMAIL_TO) || DEFAULT_TO;
     const from = env.EMAIL_FROM?.trim() || DEFAULT_FROM;
     const subject = buildSubject(payload);
     const email = {
@@ -87,6 +87,15 @@ function validatePayload(payload) {
   if (!payload.answers || typeof payload.answers !== "object") return "Diagnostic answers are missing.";
   if (!payload.report || typeof payload.report !== "object") return "Diagnostic report is missing.";
   return "";
+}
+
+function parseRecipients(value) {
+  if (!value?.trim()) return null;
+  const recipients = value
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+  return recipients.length ? recipients : null;
 }
 
 function buildSubject(payload) {
