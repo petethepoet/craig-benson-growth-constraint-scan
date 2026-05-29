@@ -14,7 +14,9 @@ export async function onRequestPost({ request, env }) {
       return json({ ok: false, error: validationError }, 400);
     }
 
-    if (!env.RESEND_API_KEY) {
+    const resendApiKey = env.RESEND_API_KEY?.replace(/\s+/g, "");
+
+    if (!resendApiKey) {
       return json(
         {
           ok: false,
@@ -24,8 +26,8 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    const to = env.EMAIL_TO || DEFAULT_TO;
-    const from = env.EMAIL_FROM || DEFAULT_FROM;
+    const to = env.EMAIL_TO?.trim() || DEFAULT_TO;
+    const from = env.EMAIL_FROM?.trim() || DEFAULT_FROM;
     const subject = buildSubject(payload);
     const email = {
       from,
@@ -39,7 +41,7 @@ export async function onRequestPost({ request, env }) {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        Authorization: `Bearer ${resendApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(email),
@@ -47,19 +49,29 @@ export async function onRequestPost({ request, env }) {
     const result = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      console.error("Email provider rejected submission", {
+        status: response.status,
+        message: result.message || "Unknown provider error.",
+      });
       return json(
         {
           ok: false,
-          error: result.message || "Email provider rejected the submission.",
-          providerStatus: response.status,
+          error: "Email delivery is not available right now.",
         },
-        502,
+        500,
       );
     }
 
     return json({ ok: true, emailId: result.id || null });
   } catch (error) {
-    return json({ ok: false, error: "Could not process the submission." }, 500);
+    console.error("Submission processing failed", error);
+    return json(
+      {
+        ok: false,
+        error: "Could not process the submission.",
+      },
+      500,
+    );
   }
 }
 
@@ -84,6 +96,9 @@ function buildSubject(payload) {
 }
 
 function buildTextEmail(payload) {
+  const weakAreas = Array.isArray(payload.report.weakAreas) ? payload.report.weakAreas : [];
+  const evidenceGaps = Array.isArray(payload.report.evidenceGaps) ? payload.report.evidenceGaps : [];
+  const firstPriorities = Array.isArray(payload.report.firstPriorities) ? payload.report.firstPriorities : [];
   const lines = [
     "Industrial Growth Constraint Scan submission",
     "",
@@ -111,15 +126,15 @@ function buildTextEmail(payload) {
     `Commercial implication: ${payload.report.commercialImplication}`,
     "",
     "TOP WEAK AREAS",
-    ...payload.report.weakAreas.map(
+    ...weakAreas.map(
       (area, index) => `${index + 1}. ${area.label} (${area.score}) - ${area.interpretation}`,
     ),
     "",
     "EVIDENCE GAPS",
-    ...payload.report.evidenceGaps.map((gap) => `- ${gap.item} (${gap.area})`),
+    ...evidenceGaps.map((gap) => `- ${gap.item} (${gap.area})`),
     "",
     "FIRST PRIORITIES",
-    ...payload.report.firstPriorities.map((item) => `- ${item}`),
+    ...firstPriorities.map((item) => `- ${item}`),
     "",
     "ANSWERS",
     ...Object.entries(payload.answers).map(([key, value]) => `${key}: ${value}`),
@@ -141,16 +156,19 @@ function buildTextEmail(payload) {
 }
 
 function buildHtmlEmail(payload) {
-  const weakAreas = payload.report.weakAreas
+  const reportWeakAreas = Array.isArray(payload.report.weakAreas) ? payload.report.weakAreas : [];
+  const reportEvidenceGaps = Array.isArray(payload.report.evidenceGaps) ? payload.report.evidenceGaps : [];
+  const reportFirstPriorities = Array.isArray(payload.report.firstPriorities) ? payload.report.firstPriorities : [];
+  const weakAreas = reportWeakAreas
     .map(
       (area) =>
         `<li><strong>${escapeHtml(area.label)}</strong> (${area.score})<br />${escapeHtml(area.interpretation)}</li>`,
     )
     .join("");
-  const evidenceGaps = payload.report.evidenceGaps
+  const evidenceGaps = reportEvidenceGaps
     .map((gap) => `<li>${escapeHtml(gap.item)} <span style="color:#64748b;">(${escapeHtml(gap.area)})</span></li>`)
     .join("");
-  const priorities = payload.report.firstPriorities.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  const priorities = reportFirstPriorities.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   const answers = Object.entries(payload.answers)
     .map(([key, value]) => `<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(String(value))}</td></tr>`)
     .join("");
