@@ -568,7 +568,17 @@ function submitDiagnosticPayload(payload) {
   // Connect a GoHighLevel webhook here if this should create/update a CRM contact and opportunity.
   // Connect Airtable or Google Sheets here if the first production workflow should be a review queue.
   console.info("Industrial Growth Constraint Scan submission", payload);
-  return Promise.resolve({ ok: true });
+  return fetch("/api/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).then(async (response) => {
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok === false) {
+      throw new Error(result.error || "Submission failed. Please try again.");
+    }
+    return result;
+  });
 }
 
 export default function App() {
@@ -576,6 +586,7 @@ export default function App() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [submittedPayload, setSubmittedPayload] = useState(null);
+  const [submitError, setSubmitError] = useState("");
   const [lead, setLead] = useState({
     name: "",
     email: "",
@@ -641,6 +652,27 @@ export default function App() {
 
   async function handleLeadSubmit(event) {
     event.preventDefault();
+    setSubmitError("");
+    const report = {
+      score,
+      band: band.name,
+      bandLine: band.line,
+      actionTitle: band.actionTitle,
+      firstPriorities: band.actions,
+      avoid: band.avoid,
+      weakAreas: weakAreas.map((area) => ({
+        id: area.id,
+        label: area.label,
+        score: area.score,
+        interpretation: area.interpretation,
+        nextMove: area.nextMove,
+      })),
+      evidenceGaps,
+      constraintPattern: getConstraintPattern(weakAreas),
+      commercialImplication: getCommercialImplication(band, weakAreas),
+      automatedSummary,
+      routingStatus,
+    };
     const payload = {
       contact: lead,
       qualification: {
@@ -651,20 +683,21 @@ export default function App() {
       answers,
       score,
       band: band.name,
-      weakAreas: weakAreas.map((area) => ({
-        id: area.id,
-        label: area.label,
-        score: area.score,
-      })),
+      weakAreas: report.weakAreas,
       evidenceGaps,
+      report,
       routingStatus,
       submittedAt: new Date().toISOString(),
     };
 
-    await submitDiagnosticPayload(payload);
-    setSubmittedPayload(payload);
-    setStep("result");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    try {
+      await submitDiagnosticPayload(payload);
+      setSubmittedPayload(payload);
+      setStep("result");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setSubmitError(error.message || "Submission failed. Please try again.");
+    }
   }
 
   return (
@@ -687,6 +720,7 @@ export default function App() {
           lead={lead}
           score={score}
           setLead={setLead}
+          submitError={submitError}
         />
       )}
       {step === "result" && (
@@ -1059,7 +1093,7 @@ function Quiz({ currentQuestion, index, progress, answerQuestion, setStep }) {
   );
 }
 
-function LeadCapture({ lead, setLead, score, band, handleLeadSubmit }) {
+function LeadCapture({ lead, setLead, score, band, handleLeadSubmit, submitError }) {
   const update = (key, value) => setLead({ ...lead, [key]: value });
 
   return (
@@ -1164,6 +1198,11 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit }) {
             <Button type="submit" variant="dark" className="mt-2">
               Generate my private report
             </Button>
+            {submitError ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+                {submitError}
+              </div>
+            ) : null}
           </form>
         </Card>
       </div>
