@@ -16,6 +16,20 @@ import {
 
 const diagnosticName = "The Industrial Growth Constraint Scan";
 const headshotUrl = "/craig-benson.png";
+const initialLead = {
+  name: "",
+  email: "",
+  company: "",
+  title: "",
+  phone: "",
+  revenue: "",
+  ownership: "",
+  trigger: "",
+  timing: "",
+  involvement: "",
+  decision: "",
+  notes: "",
+};
 
 const qualifiedTimings = ["0-90 days"];
 const qualifiedTriggers = [
@@ -587,20 +601,7 @@ export default function App() {
   const [answers, setAnswers] = useState({});
   const [submittedPayload, setSubmittedPayload] = useState(null);
   const [submitError, setSubmitError] = useState("");
-  const [lead, setLead] = useState({
-    name: "",
-    email: "",
-    company: "",
-    title: "",
-    phone: "",
-    revenue: "",
-    ownership: "",
-    trigger: "",
-    timing: "",
-    involvement: "",
-    decision: "",
-    notes: "",
-  });
+  const [lead, setLead] = useState(initialLead);
 
   const score = useMemo(
     () => Object.values(answers).reduce((sum, value) => sum + Number(value || 0), 0),
@@ -626,7 +627,21 @@ export default function App() {
   const currentQuestion = questions[index];
 
   function startScan() {
+    setAnswers({});
+    setIndex(0);
+    setSubmittedPayload(null);
+    setSubmitError("");
     setStep("quiz");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goHome() {
+    setAnswers({});
+    setIndex(0);
+    setSubmittedPayload(null);
+    setSubmitError("");
+    setLead(initialLead);
+    setStep("landing");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -711,7 +726,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <Header startScan={startScan} />
+      <Header goHome={goHome} startScan={startScan} />
       {step === "landing" && <Landing startScan={startScan} />}
       {step === "quiz" && (
         <Quiz
@@ -750,18 +765,18 @@ export default function App() {
   );
 }
 
-function Header({ startScan }) {
+function Header({ goHome, startScan }) {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/92 backdrop-blur print:hidden">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <a href="#top" className="min-w-0">
+        <button type="button" onClick={goHome} className="min-w-0 text-left">
           <div className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-300 sm:text-sm">
             Craig Benson
           </div>
           <div className="hidden text-xs text-slate-400 sm:block">
             Industrial Growth Operator
           </div>
-        </a>
+        </button>
         <nav className="hidden items-center gap-6 text-sm text-slate-300 lg:flex">
           <a href="#craig" className="hover:text-white">
             Craig
