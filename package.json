@@ -2,6 +2,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "node scripts/assertions.mjs",
     "build": "vite build",
     "build:functions": "npx wrangler pages functions build functions --outdir dist",
     "deploy:cloudflare": "npm run build && npm run build:functions && npx wrangler pages deploy dist --project-name craig-benson-growth-constraint-scan --branch main",

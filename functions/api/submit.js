@@ -99,7 +99,7 @@ function parseRecipients(value) {
 }
 
 function buildSubject(payload) {
-  const route = payload.routingStatus === "qualified" ? "Qualified" : "Automated";
+  const route = payload.leadRoute || (payload.routingStatus === "qualified" ? "Qualified" : "AI Summary");
   const company = payload.contact.company || "Unknown company";
   return `[${route}] Craig Benson scan - ${company}`;
 }
@@ -120,9 +120,11 @@ function buildTextEmail(payload) {
     "",
     "QUALIFICATION",
     `Routing: ${payload.routingStatus}`,
+    `Lead route: ${payload.leadRoute || ""}`,
     `Trigger: ${payload.qualification?.trigger || ""}`,
     `Timing: ${payload.qualification?.timing || ""}`,
-    `Role: ${payload.qualification?.role || ""}`,
+    `Audience: ${payload.qualification?.audienceType || payload.qualification?.role || ""}`,
+    `Looking for: ${payload.qualification?.lookingFor || ""}`,
     `Ownership: ${payload.contact.ownership || ""}`,
     `Revenue: ${payload.contact.revenue || ""}`,
     `Decision: ${payload.contact.decision || ""}`,
@@ -171,6 +173,7 @@ function buildHtmlEmail(payload) {
   const reportFirstPriorities = Array.isArray(payload.report.firstPriorities) ? payload.report.firstPriorities : [];
   const avoid = Array.isArray(payload.report.avoid) ? payload.report.avoid : [];
   const routeIsQualified = payload.routingStatus === "qualified";
+  const leadRoute = payload.leadRoute || (routeIsQualified ? "Paid Advisory Opportunity" : "Nurture / AI Summary");
   const score = Number(payload.report.score ?? payload.score ?? 0);
   const band = payload.report.band || payload.band || "";
   const bandLine = payload.report.bandLine || "";
@@ -250,7 +253,9 @@ function buildHtmlEmail(payload) {
     ["Ownership", payload.contact.ownership],
     ["Trigger", payload.qualification?.trigger],
     ["Timing", payload.qualification?.timing],
-    ["Role", payload.qualification?.role],
+    ["Audience", payload.qualification?.audienceType || payload.qualification?.role],
+    ["Looking for", payload.qualification?.lookingFor],
+    ["Lead route", leadRoute],
     ["Decision", payload.contact.decision],
     ["Notes", payload.contact.notes],
   ]
@@ -264,12 +269,12 @@ function buildHtmlEmail(payload) {
     .join("");
   const routeCard = routeIsQualified
     ? `
-      <div style="font-size:22px;line-height:28px;font-weight:800;color:#ffffff;">Request a fit conversation</div>
-      <div style="font-size:14px;line-height:22px;color:#fde68a;margin-top:12px;">This appears to involve an active operating need and a role connected to the decision. If there is a serious mandate behind the situation, request a fit conversation with Craig.</div>`
+      <div style="font-size:22px;line-height:28px;font-weight:800;color:#ffffff;">${leadRoute === "CEO/Role Opportunity" ? "Operating mandate discussion" : "Paid advisory review"}</div>
+      <div style="font-size:14px;line-height:22px;color:#fde68a;margin-top:12px;">This appears to involve a serious operating or advisory situation. Craig may review select opportunities where there is a clear mandate and appropriate fit. The diagnostic report is useful, but Craig's direct review is not positioned as free consulting.</div>`
     : `
-      <div style="font-size:22px;line-height:28px;font-weight:800;color:#ffffff;">Automated summary</div>
+      <div style="font-size:22px;line-height:28px;font-weight:800;color:#ffffff;">AI-assisted summary</div>
       <div style="font-size:14px;line-height:22px;color:#fde68a;margin-top:12px;">${escapeHtml(payload.report.automatedSummary || "")}</div>
-      <div style="font-size:12px;line-height:18px;color:#fde68a;margin-top:12px;">This response is automated and has not been reviewed or vetted by Craig Benson.</div>`;
+      <div style="font-size:12px;line-height:18px;color:#fde68a;margin-top:12px;">This automated summary has not been reviewed or vetted by Craig Benson. It is not consulting advice.</div>`;
 
   return `<!doctype html>
 <html>
@@ -303,7 +308,7 @@ function buildHtmlEmail(payload) {
                     </td>
                     <td width="220" style="vertical-align:top;">
                       ${emailMetric("Readiness band", band)}
-                      ${emailMetric("Routing", routeIsQualified ? "Fit conversation route" : "Automated summary route")}
+                      ${emailMetric("Routing", leadRoute)}
                       ${emailMetric("Top area", reportWeakAreas[0]?.label || "Not available")}
                     </td>
                   </tr>

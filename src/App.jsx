@@ -26,6 +26,8 @@ const initialLead = {
   ownership: "",
   trigger: "",
   timing: "",
+  audienceType: "",
+  lookingFor: "",
   involvement: "",
   decision: "",
   notes: "",
@@ -47,6 +49,24 @@ const qualifiedRoles = [
   "CEO/president",
   "Recruiter/search partner",
 ];
+const seriousAudienceTypes = [
+  "Founder / owner",
+  "PE partner / independent sponsor",
+  "Board member",
+  "CEO / president",
+  "Recruiter / search partner",
+];
+const paidOpportunityTypes = [
+  "Paid advisory review",
+  "Interim / transformation mandate",
+  "Diligence support",
+];
+const leadRoutes = {
+  role: "CEO/Role Opportunity",
+  paid: "Paid Advisory Opportunity",
+  referral: "Referral / Network",
+  nurture: "Nurture / AI Summary",
+};
 
 const questions = [
   {
@@ -536,12 +556,31 @@ function buildReportRows(answers) {
 }
 
 function getQualificationStatus(lead) {
-  const qualified =
-    qualifiedTimings.includes(lead.timing) &&
-    qualifiedTriggers.includes(lead.trigger) &&
-    qualifiedRoles.includes(lead.involvement);
+  const route = getLeadRoute(lead);
+  const qualified = route === leadRoutes.role || route === leadRoutes.paid;
 
   return qualified ? "qualified" : "not-qualified";
+}
+
+function getLeadRoute(lead) {
+  const lookingFor = lead.lookingFor || "";
+  const audience = lead.audienceType || lead.involvement || "";
+  const seriousAudience =
+    seriousAudienceTypes.includes(audience) || qualifiedRoles.includes(audience);
+
+  if (lookingFor === "Hiring Craig as CEO / President / operator" && seriousAudience) {
+    return leadRoutes.role;
+  }
+
+  if (paidOpportunityTypes.includes(lookingFor)) {
+    return leadRoutes.paid;
+  }
+
+  if (lookingFor === "Referral / networking") {
+    return leadRoutes.referral;
+  }
+
+  return leadRoutes.nurture;
 }
 
 function buildAutomatedSummary(score, band, weakAreas) {
@@ -622,6 +661,7 @@ export default function App() {
         .slice(0, 10),
     [reportRows],
   );
+  const leadRoute = getLeadRoute(lead);
   const routingStatus = getQualificationStatus(lead);
   const automatedSummary = buildAutomatedSummary(score, band, weakAreas);
   const currentQuestion = questions[index];
@@ -696,13 +736,16 @@ export default function App() {
       commercialImplication: getCommercialImplication(band, weakAreas),
       automatedSummary,
       routingStatus,
+      leadRoute,
     };
     const payload = {
       contact: lead,
       qualification: {
         timing: lead.timing,
         trigger: lead.trigger,
-        role: lead.involvement,
+        audienceType: lead.audienceType,
+        lookingFor: lead.lookingFor,
+        role: lead.audienceType || lead.involvement,
       },
       answers,
       score,
@@ -711,6 +754,7 @@ export default function App() {
       evidenceGaps,
       report,
       routingStatus,
+      leadRoute,
       submittedAt: new Date().toISOString(),
     };
 
@@ -753,6 +797,7 @@ export default function App() {
           band={band}
           evidenceGaps={evidenceGaps}
           lead={lead}
+          leadRoute={leadRoute}
           reportRows={reportRows}
           resetQuiz={resetQuiz}
           routingStatus={routingStatus}
@@ -948,24 +993,47 @@ function Diagnostic({ startScan }) {
   const fitCards = [
     {
       icon: Users,
-      title: "Founder transition",
-      copy: "Move relationships, decisions, and operating rhythm out of the founder's head without breaking what made the company work.",
+      title: "Founder transition without breaking customer trust",
+      copy: "Move relationships, decisions, and operating rhythm out of the founder's head without damaging the trust that built the company.",
     },
     {
       icon: LineChart,
+      title: "PE-backed value creation where execution must catch up",
+      copy: "Translate a value-creation thesis into cadence, ownership, margin visibility, and first-100-day operating priorities.",
+    },
+    {
+      icon: Factory,
       title: "Commercial reset",
       copy: "Turn sales from reactive quoting and heroic effort into cadence, coverage, pipeline truth, and margin-aware growth.",
     },
     {
       icon: Wrench,
-      title: "Operating cadence",
-      copy: "Create the weekly rhythm, decision rights, and scoreboards that make execution visible and owned.",
+      title: "Margin visibility / pricing discipline",
+      copy: "Expose where customer, product, quote, and cost-to-serve decisions are creating margin noise or hidden leakage.",
     },
     {
       icon: ShieldCheck,
-      title: "Value creation readiness",
-      copy: "Translate the mandate into first-100-day priorities, board-ready reporting, and practical operating moves.",
+      title: "Leadership accountability and operating cadence",
+      copy: "Create the weekly rhythm, decision rights, and scoreboards that make execution visible and owned.",
     },
+    {
+      icon: BarChart3,
+      title: "Acquisition integration or platform readiness",
+      copy: "Confirm whether systems, leadership bandwidth, customer continuity, and reporting can absorb the next move.",
+    },
+    {
+      icon: CheckCircle2,
+      title: "First-100-day operating plan",
+      copy: "Turn an active mandate into priorities, owners, evidence, cadence, and board-ready decision points.",
+    },
+  ];
+  const notFit = [
+    "No real mandate or decision authority",
+    "Looking for free consulting",
+    "No willingness to change cadence, accountability, or visibility",
+    "Ethical or compliance concerns",
+    "Pure theory, no operating urgency",
+    "Situations better served by a specialist recruiter, CPA, M&A advisor, or functional consultant",
   ];
 
   return (
@@ -1000,7 +1068,7 @@ function Diagnostic({ startScan }) {
               Where this fits
             </div>
             <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-              Built for the uncomfortable middle stage.
+              When Craig is the right fit.
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-700">
               The best fit is a real industrial business with market demand, useful capabilities, and enough complexity that founder instinct, heroic sales, and spreadsheet management are no longer enough.
@@ -1016,6 +1084,26 @@ function Diagnostic({ startScan }) {
             ))}
           </div>
         </div>
+        <div className="mx-auto mt-12 grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-700">
+              When Craig is not the right fit
+            </div>
+            <h3 className="mt-3 text-2xl font-semibold sm:text-3xl">
+              The scan should not create unpaid consulting obligations.
+            </h3>
+            <p className="mt-4 leading-7 text-slate-700">
+              If Craig is not the right fit, the next best step may be a referral to a specialist, recruiter, M&A advisor, CPA, or functional consultant.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {notFit.map((item) => (
+              <div key={item} className="rounded-lg border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-700">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
         <Card className="border border-white/10 bg-slate-900 p-6 sm:p-10 lg:p-12">
@@ -1028,7 +1116,7 @@ function Diagnostic({ startScan }) {
                 Use the scan when there is a real operating decision on the table.
               </h2>
               <p className="mt-5 text-lg leading-8 text-slate-300">
-                The scan gives owners, sponsors, boards, and search partners a structured first read on where the business is constrained, what evidence would confirm it, and whether the situation merits a fit conversation with Craig.
+                The scan gives owners, sponsors, boards, and search partners a structured first read on where the business is constrained, what evidence would confirm it, and whether the situation may merit a paid advisory review, operating mandate discussion, role/search discussion, or referral path.
               </p>
             </div>
             <Card className="border border-white/10 bg-white/5 p-6">
@@ -1038,7 +1126,7 @@ function Diagnostic({ startScan }) {
                   "0-24 value-creation readiness score",
                   "Top 3 constraints and evidence gaps",
                   "Recommended first 100-day moves",
-                  "Qualified opportunities can request a fit conversation",
+                  "Serious opportunities can request a paid advisory review",
                 ].map((item) => (
                   <div key={item} className="flex gap-3">
                     <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-amber-300" />
@@ -1131,10 +1219,10 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit, submitError
             Confirm the operating context.
           </h1>
           <p className="mt-4 text-slate-300">
-            Craig reviews situations where there is a real operating mandate, active timing, and a decision-maker or search partner involved. The report remains private; routing depends on the context you provide here.
+            The diagnostic report is useful on its own. Direct access to Craig's judgment is reserved for select paid advisory needs, serious operating mandates, or role/search discussions with clear decision authority.
           </p>
           <div className="mt-6 space-y-3 border-t border-white/10 pt-6">
-            {["Active operating need", "Clear decision context", "Manufacturer or industrial platform", "Owner, sponsor, board, CEO, or search role"].map((item) => (
+            {["Active operating need", "Clear decision context", "Manufacturer or industrial platform", "Paid advisory, role, search, or mandate fit"].map((item) => (
               <div key={item} className="flex gap-3 text-sm text-slate-300">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
                 {item}
@@ -1152,7 +1240,7 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit, submitError
         <Card className="border border-white/10 bg-white p-6 text-slate-950 sm:p-8">
           <h2 className="text-2xl font-semibold">Generate the private report</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Required fields help determine whether this should be routed toward a fit conversation or returned as an automated summary.
+            Required fields help route serious paid advisory, operating mandate, and role/search opportunities while returning a useful diagnostic report for everyone.
           </p>
           <form onSubmit={handleLeadSubmit} className="mt-6 grid gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -1190,17 +1278,39 @@ function LeadCapture({ lead, setLead, score, band, handleLeadSubmit, submitError
             />
             <Select
               required
-              label="Timing of operating need"
+              label="Timing"
               value={lead.timing}
               onChange={(value) => update("timing", value)}
-              options={["0-90 days", "3-6 months", "6+ months", "General research"]}
+              options={["Active now", "0-90 days", "3-6 months", "6+ months", "Research only"]}
             />
             <Select
               required
-              label="Your role in the situation"
-              value={lead.involvement}
-              onChange={(value) => update("involvement", value)}
-              options={[...qualifiedRoles, "Advisor/consultant", "Other"]}
+              label="What best describes you?"
+              value={lead.audienceType}
+              onChange={(value) => update("audienceType", value)}
+              options={[
+                "Founder / owner",
+                "PE partner / independent sponsor",
+                "Board member",
+                "CEO / president",
+                "Recruiter / search partner",
+                "Advisor / consultant",
+                "Other",
+              ]}
+            />
+            <Select
+              required
+              label="What are you looking for?"
+              value={lead.lookingFor}
+              onChange={(value) => update("lookingFor", value)}
+              options={[
+                "Hiring Craig as CEO / President / operator",
+                "Paid advisory review",
+                "Interim / transformation mandate",
+                "Diligence support",
+                "Referral / networking",
+                "General research",
+              ]}
             />
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               What decision are you trying to make?
@@ -1275,6 +1385,7 @@ function Report({
   band,
   evidenceGaps,
   lead,
+  leadRoute,
   reportRows,
   resetQuiz,
   routingStatus,
@@ -1283,9 +1394,12 @@ function Report({
   weakAreas,
 }) {
   const isQualified = routingStatus === "qualified";
+  const isReferral = leadRoute === leadRoutes.referral;
   const constraintPattern = getConstraintPattern(weakAreas);
   const commercialImplication = getCommercialImplication(band, weakAreas);
-  const routingLabel = isQualified ? "Fit conversation route" : "Automated summary route";
+  const routingLabel = isQualified ? leadRoute : isReferral ? leadRoutes.referral : "AI-assisted summary";
+  const qualifiedCta =
+    leadRoute === leadRoutes.role ? "Start an operating mandate discussion" : "Request a paid advisory review";
 
   return (
     <main className="report-page mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
@@ -1344,7 +1458,7 @@ function Report({
           <div className="mt-8 rounded-lg border border-white/10 bg-slate-900 p-5 print:border-slate-200 print:bg-slate-50">
             <div className="text-sm font-semibold text-amber-300 print:text-amber-700">Submitted context</div>
             <div className="mt-3 space-y-2 text-sm text-slate-300 print:text-slate-700">
-              {["name", "company", "title", "revenue", "ownership", "trigger", "timing", "involvement", "decision"].map((key) => (
+              {["name", "company", "title", "revenue", "ownership", "trigger", "timing", "audienceType", "lookingFor", "decision"].map((key) => (
                 <div key={key}>
                   <span className="text-slate-500">{key}:</span> {lead[key] || "Not provided"}
                 </div>
@@ -1454,27 +1568,40 @@ function Report({
           <Card className="report-card border border-amber-300/30 bg-amber-300/10 p-6 text-amber-50 print:border-slate-200 print:bg-slate-50 print:text-slate-950 sm:p-8">
             {isQualified ? (
               <>
-                <h2 className="text-2xl font-semibold">Request a fit conversation</h2>
+                <h2 className="text-2xl font-semibold">{qualifiedCta}</h2>
                 <p className="mt-3 leading-7 text-amber-100 print:text-slate-700">
-                  This appears to involve an active operating need and a role connected to the decision. If there is a serious mandate behind the situation, request a fit conversation with Craig.
+                  Your submission appears to involve a serious operating or advisory situation. Craig may review select opportunities where there is a clear mandate and appropriate fit. The diagnostic report is free and useful; Craig's direct review is not positioned as free consulting.
                 </p>
                 <a
                   href={`mailto:CraigBenson0848@gmail.com?subject=${encodeURIComponent(
-                    "Fit conversation request - Industrial Growth Constraint Scan",
+                    `${qualifiedCta} - Industrial Growth Constraint Scan`,
                   )}&body=${encodeURIComponent(
-                    `Name: ${lead.name}\nCompany: ${lead.company}\nScore: ${score}/24\nBand: ${band.name}\nTrigger: ${lead.trigger}\nTiming: ${lead.timing}\nRole: ${lead.involvement}`,
+                    `Name: ${lead.name}\nCompany: ${lead.company}\nScore: ${score}/24\nBand: ${band.name}\nTrigger: ${lead.trigger}\nTiming: ${lead.timing}\nAudience: ${lead.audienceType}\nLooking for: ${lead.lookingFor}\nRoute: ${leadRoute}`,
                   )}`}
                   className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-300 print:hidden"
                 >
-                  Request a fit conversation
+                  {qualifiedCta}
                 </a>
+                <p className="mt-3 text-xs leading-5 text-amber-100 print:text-slate-700">
+                  Submitting a request does not guarantee a response or engagement.
+                </p>
+              </>
+            ) : isReferral ? (
+              <>
+                <h2 className="text-2xl font-semibold">Referral path</h2>
+                <p className="mt-3 leading-7 text-amber-100 print:text-slate-700">
+                  This appears more likely to be a referral or networking situation than a paid advisory review or operating mandate. The report can still help frame the right next conversation.
+                </p>
+                <p className="mt-4 text-sm text-amber-100 print:text-slate-700">
+                  If Craig is not the right fit, the next best step may be a specialist, recruiter, M&A advisor, CPA, or functional consultant.
+                </p>
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-semibold">Automated summary</h2>
+                <h2 className="text-2xl font-semibold">AI-assisted summary</h2>
                 <p className="mt-3 leading-7 text-amber-100 print:text-slate-700">{automatedSummary}</p>
                 <p className="mt-4 text-sm text-amber-100 print:text-slate-700">
-                  This response is automated and has not been reviewed or vetted by Craig Benson.
+                  This automated summary has not been reviewed or vetted by Craig Benson. It is not consulting advice.
                 </p>
                 <div className="mt-5 space-y-3 border-t border-amber-300/20 pt-5 text-sm text-amber-100 print:border-slate-200 print:text-slate-700">
                   {["Gather the evidence gaps listed above.", "Confirm whether the issue has an active decision owner.", "Re-run the scan when timing, role, or trigger changes."].map((item) => (
@@ -1489,6 +1616,19 @@ function Report({
             <div className="mt-4 text-sm text-amber-100 print:text-slate-700">
               Craig Benson | 612.203.4280 | CraigBenson0848@gmail.com
             </div>
+          </Card>
+          <Card className="report-card border border-white/10 bg-white/5 p-6 text-slate-200 print:border-slate-200 print:bg-slate-50 print:text-slate-950 sm:p-8">
+            <h2 className="text-2xl font-semibold">Want a deeper read?</h2>
+            <p className="mt-3 leading-7 text-slate-300 print:text-slate-700">
+              A deeper review may be offered later as a paid advisory option. For now, this report is designed to help frame the right operating questions without replacing professional judgment.
+            </p>
+            <button
+              type="button"
+              disabled
+              className="mt-5 w-full rounded-lg border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-slate-400 print:hidden"
+            >
+              Deeper paid review option not available yet
+            </button>
           </Card>
         </aside>
       </section>
